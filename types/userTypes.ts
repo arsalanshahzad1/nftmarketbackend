@@ -1,6 +1,12 @@
 // types/User.ts
 import { Types } from 'mongoose';
 
+
+ enum Role {
+  user = "user",
+  admin = "admin"
+}
+
  interface IUser {
   userId: string;
   name: string;
@@ -9,6 +15,7 @@ import { Types } from 'mongoose';
   privateKey: string;
   publicKey: string;
   tokenVersion:number
+  role:Role
 }
 
 
@@ -24,6 +31,7 @@ import { Types } from 'mongoose';
     email : string,
     name:string,
     password:string,
+    role?:Role
 }
 
 interface Login_Dto {
@@ -31,4 +39,4 @@ interface Login_Dto {
   email:string
 }
 
-export {IUser,INft,User_SignUp_Dto,Login_Dto}
+export {IUser,INft,User_SignUp_Dto,Login_Dto,Role}

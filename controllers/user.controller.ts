@@ -1,19 +1,31 @@
 import { UserModel } from "../models/user.model";
 import { Request, Response } from "express";
-import { User_SignUp_Dto, Login_Dto } from "../types/userTypes";
+import { User_SignUp_Dto, Login_Dto, Role } from "../types/userTypes";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 
-const signUp = async (req: Request<{}, {}, User_SignUp_Dto>, res: Response) => {
+const signUp = async (req: Request<{}, {}, User_SignUp_Dto & { adminSecret?: string }>, res: Response) => {
   try {
-    const { userId, email, name, password } = req.body;
+    const { userId, email, name, password,role, adminSecret } = req.body;
     const User = await UserModel.findOne({ email, name });
     if (User)
       return void res
         .status(200)
         .json({ message: "user with same mail already exist" });
-    const newUser = new UserModel({ userId, email, name, password });
+
+
+          let assignedRole: Role = Role.user;
+
+    if (role === Role.admin) {
+      if (adminSecret === process.env.ADMIN_SIGN_UP_SECRET) {
+        assignedRole = Role.admin;
+      } else {
+        return void res.status(403).json({ message: "Invalid admin secret" });
+      }
+    }
+      
+    const newUser = new UserModel({ userId, email, name, password,role:assignedRole});
 
     await newUser.save();
     return void res.status(200).json({ message: "signUp succesFull" });
@@ -40,7 +52,7 @@ const logIn = async (req: Request<{}, {}, Login_Dto>, res: Response) => {
     }
     const userId = User._id;
     const token = jwt.sign(
-      { userId, email, password, tokenVersion: User.tokenVersion },
+      { userId, email, password, tokenVersion: User.tokenVersion,role: User.role,},
       process.env.JWT_SECRET!,
       { expiresIn: "30m" }
     );

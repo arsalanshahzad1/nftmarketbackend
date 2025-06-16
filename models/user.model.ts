@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import {IUser} from '../types/userTypes'
+import {IUser,Role} from '../types/userTypes'
 import bcrypt from 'bcrypt'
 import CryptoJS from 'crypto-js'
 import { Wallet} from 'ethers'
@@ -13,6 +13,11 @@ const UserSchema: Schema = new Schema<IUserDocument>({
   privateKey: { type: String ,default: null },
   publicKey: { type: String,default: null },
   tokenVersion: { type: Number, default: 0 },
+    role: {
+    type: String,
+    enum: Object.values(Role), // This ensures only valid enum strings
+    default: Role.user,        //  Set default to string enum
+  },
 });
 
 

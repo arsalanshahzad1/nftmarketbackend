@@ -2,14 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { UserModel } from '../models/user.model';
+import { Role } from '../types/userTypes';
 
 dotenv.config();
 
-// Define the shape of your JWT payload
+// Define the shape of JWT payload
 interface JwtPayloadCustom {
     userId: string;
     email: string;
-    password: string; // hashed password
+    password: string;
+    role: Role; // hashed password
     tokenVersion: number;
 }
 
@@ -51,4 +53,31 @@ export async function checkToken(req: Request, res: Response, next: NextFunction
         res.status(403).json({ error: 'Invalid or expired token' });
     }
 }
+
+
+
+export function requireRole(role: Role) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user || req.user.role !== role) {
+      res.status(403).json({ error: `Access denied: ${role} role required` });
+      return;
+    }
+    next();
+  };
+}
+//when using on the Routes requireRole(Role.admin)
+
+// Middleware to allow one of multiple roles
+export function requireAnyRole(...roles: Role[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      res.status(403).json({ error: `Access denied: One of [${roles.join(', ')}] required` });
+      return;
+    }
+    next();
+  };
+}
+
+//when using on the Routes requireAnyRole(Role.admin, Role.user)
+
 
