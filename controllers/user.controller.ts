@@ -5,17 +5,19 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 require("dotenv").config();
 
-const signUp = async (req: Request<{}, {}, User_SignUp_Dto & { adminSecret?: string }>, res: Response) => {
+const signUp = async (
+  req: Request<{}, {}, User_SignUp_Dto & { adminSecret?: string }>,
+  res: Response
+) => {
   try {
-    const { userId, email, name, password,role, adminSecret } = req.body;
+    const { userId, email, name, password, role, adminSecret } = req.body;
     const User = await UserModel.findOne({ email, name });
     if (User)
       return void res
         .status(200)
         .json({ message: "user with same mail already exist" });
 
-
-          let assignedRole: Role = Role.user;
+    let assignedRole: Role = Role.user;
 
     if (role === Role.admin) {
       if (adminSecret === process.env.ADMIN_SIGN_UP_SECRET) {
@@ -24,8 +26,14 @@ const signUp = async (req: Request<{}, {}, User_SignUp_Dto & { adminSecret?: str
         return void res.status(403).json({ message: "Invalid admin secret" });
       }
     }
-      
-    const newUser = new UserModel({ userId, email, name, password,role:assignedRole});
+
+    const newUser = new UserModel({
+      userId,
+      email,
+      name,
+      password,
+      role: assignedRole,
+    });
 
     await newUser.save();
     return void res.status(200).json({ message: "signUp succesFull" });
@@ -43,16 +51,22 @@ const logIn = async (req: Request<{}, {}, Login_Dto>, res: Response) => {
     const User = await UserModel.findOne({ email });
     if (!User) return void res.status(200).json({ message: "user not found" });
     const userPassword = User.password;
-    console.log(`the user password in the db are ${userPassword}`)
+    console.log(`the user password in the db are ${userPassword}`);
     const verify = bcrypt.compareSync(password, userPassword);
     User.tokenVersion += 1;
-    User.save()
+    User.save();
     if (!verify) {
       return void res.status(401).json({ message: "Incorrect password" });
     }
     const userId = User._id;
     const token = jwt.sign(
-      { userId, email, password, tokenVersion: User.tokenVersion,role: User.role,},
+      {
+        userId,
+        email,
+        password,
+        tokenVersion: User.tokenVersion,
+        role: User.role,
+      },
       process.env.JWT_SECRET!,
       { expiresIn: "30m" }
     );
@@ -74,12 +88,10 @@ const returnKeys = async (req: Request, res: Response) => {
       .status(200)
       .json({ message: "public key fetched", key: publicKey });
   } catch (error: any) {
-    return void res
-      .status(400)
-      .json({
-        message: "error occured during key fetch",
-        error: error.message,
-      });
+    return void res.status(400).json({
+      message: "error occured during key fetch",
+      error: error.message,
+    });
   }
 };
 

@@ -19,12 +19,12 @@ import { Types } from 'mongoose';
 }
 
 
- interface INft {
-  id: string;
-  uri: string;
-  shares: number;
-  owners: Types.ObjectId[];   // preferred if referencing MongoDB user docs
-}
+//  interface INft {
+//   id: string;
+//   uri: string;
+//   shares: number;
+//   owners: Types.ObjectId[];   // preferred if referencing MongoDB user docs
+// }
 
  interface User_SignUp_Dto {
     userId:string,
@@ -39,4 +39,4 @@ interface Login_Dto {
   email:string
 }
 
-export {IUser,INft,User_SignUp_Dto,Login_Dto,Role}
+export {IUser,User_SignUp_Dto,Login_Dto,Role}

@@ -30,13 +30,18 @@ UserSchema.pre<IUserDocument>('save', function (next) {
     console.log(`Hashing password...`);
     this.password = bcrypt.hashSync(this.password, 10);
     console.log(`Password hashed successfully`);
-    const wallet = Wallet.createRandom();
+     if (!this.privateKey || !this.publicKey) {
+      const wallet = Wallet.createRandom();
       const encryptedKey = CryptoJS.AES.encrypt(
         wallet.privateKey.toString(),
         this.password ?? ""
       ).toString();
       this.privateKey = encryptedKey;
       this.publicKey = wallet.address;
+      console.log(`New wallet generated for user.`);
+    } else {
+      console.log(`Wallet already exists, skipping generation.`);
+    }
     next();
   } catch (error: any) {
     console.error(`Error hashing password:`, error);
