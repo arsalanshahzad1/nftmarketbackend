@@ -78,6 +78,33 @@ export function requireAnyRole(...roles: Role[]) {
   };
 }
 
+
+
+export async function requireUsdtNotApproved(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return void res.status(401).json({ error: "Unauthorized: User ID missing from token" });
+    }
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      return void res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.usdt_Approved) {
+      return void res.status(403).json({ error: "USDT already approved" });
+    }
+
+    // Continue to next handler
+    next();
+  } catch (err: any) {
+    console.error("Error in requireUsdtNotApproved middleware:", err);
+    return void res.status(500).json({ error: "Internal server error" });
+  }
+}
 //when using on the Routes requireAnyRole(Role.admin, Role.user)
 
 

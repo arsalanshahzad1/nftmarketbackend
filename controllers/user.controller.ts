@@ -1,8 +1,21 @@
 import { UserModel } from "../models/user.model";
 import { Request, Response } from "express";
-import { User_SignUp_Dto, Login_Dto, Role } from "../types/userTypes";
+import {
+  User_SignUp_Dto,
+  Login_Dto,
+  Role,
+  Buy_Jtc_Dto,
+} from "../types/userTypes";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import CryptoJS from "crypto-js";
+import {
+  approve_Usdt,
+  buy_Jtc_Meta_Tx,
+  estimate_Usdt_Approval,
+  send_Bnb,
+} from "../meta-Txns/buy_Jtc";
+import { ethers } from "ethers";
 require("dotenv").config();
 
 const signUp = async (
@@ -95,4 +108,83 @@ const returnKeys = async (req: Request, res: Response) => {
   }
 };
 
-export { signUp, logIn, returnKeys };
+const approve_Usdt_Token = async (req: Request, res: Response) => {
+  const UserId = req.user!.userId;
+  try {
+    const User = await UserModel.findById(UserId);
+    console.log(1);
+    if (!User) return void res.status(200).json({ message: "user not found" });
+    console.log(2);
+
+    const userPrivateKey = User.privateKey;
+    console.log(3);
+
+    const bytes = CryptoJS.AES.decrypt(
+      userPrivateKey ?? "".toString(),
+      User.password ?? "".toString()
+    );
+    const encryptedKey = bytes.toString(CryptoJS.enc.Utf8);
+    console.log(`the decrypted Private Key is ${encryptedKey}`);
+    const requiredBnb = await estimate_Usdt_Approval(
+      encryptedKey,
+      process.env.JTC_TOKEN_ADDRESS!
+    );
+    const sending_Bnb = await send_Bnb(
+      User.publicKey,
+      ethers.parseEther(requiredBnb!),
+      process.env.USER_PRIVATE_KEY!
+    );
+    const approve_Usdt_token = await approve_Usdt(
+      encryptedKey,
+      process.env.JTC_TOKEN_ADDRESS!
+    );
+    console.log(`bnb sent to the use`);
+    User.usdt_Approved = true;
+    await User.save();
+    return void res.status(200).json({
+      message: "key got succesFully",
+      key: encryptedKey,
+      requiredBnb,
+      funding_tx: sending_Bnb,
+      approve_tx: approve_Usdt_token,
+    });
+  } catch (error: any) {
+    console.error("USDT Approval Error:", error);
+    return void res.status(400).json({
+      message: "USDT approval process failed",
+      error: error.message || error.toString(),
+    });
+  }
+};
+
+const buy_Jtc_Token = async (
+  req: Request<{}, {}, Buy_Jtc_Dto>,
+  res: Response
+) => {
+  const UserId = req.user!.userId;
+  const User = await UserModel.findById(UserId);
+  const { usdt_Amount } = req.body;
+
+  if (!User) return void res.status(200).json({ message: "user not found" });
+
+  try {
+    const scaledAmount = ethers.parseUnits(usdt_Amount.toString(), 18); // BigInt
+    const userPrivateKey = User.privateKey;
+    console.log(3);
+
+    const bytes = CryptoJS.AES.decrypt(
+      userPrivateKey ?? "".toString(),
+      User.password ?? "".toString()
+    );
+    const encryptedKey = bytes.toString(CryptoJS.enc.Utf8);
+    const jtcBuying = await buy_Jtc_Meta_Tx(encryptedKey, scaledAmount);
+    return void res.status(200).json({message:"trx submitted for buying the Jtc",hash:jtcBuying})
+  } catch (error: any) {
+     console.error("JTC purchase Error:", error);
+    return void res.status(400).json({
+      message: "JTC purchase process failed",
+      error: error.message || error.toString(),
+    });
+  }
+};
+export { signUp, logIn, returnKeys, approve_Usdt_Token ,buy_Jtc_Token };

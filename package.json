@@ -12,7 +12,9 @@
   "author": "anwar.pluton@gmail.com",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0"
+    "dotenv": "^8.2.0",
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@openzeppelin/defender-relay-client": "^1.54.6",

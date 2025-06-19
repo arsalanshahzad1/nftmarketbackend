@@ -21,7 +21,10 @@ const USDT_ADDRESS = process.env.USDT_OWN_Address!; // BSC Mainnet USDT
 const SPENDER_ADDRESS = "0x0E8C3348A9C6CCC3eF9e8F2649EA2490056893f0"; // Contract to approve USDT for
 const USDT_AMOUNT = MaxUint256.toString(); // Example: 10 USDT
 
-const estimate_Usdt_Approval = async (userPrivateKey:Address,spender:Address) => {
+const estimate_Usdt_Approval = async (
+  userPrivateKey: Address,
+  spender: Address
+) => {
   try {
     const userWallet = new ethers.Wallet(userPrivateKey, provider);
 
@@ -63,6 +66,9 @@ const estimate_Usdt_Approval = async (userPrivateKey:Address,spender:Address) =>
     return ethers.formatEther(estimatedBNBNeeded);
   } catch (err) {
     console.error("Error in buyJtc:", err);
+    throw new Error(
+      `estimate_Usdt_Approval failed: ${(err as any).reason || err}`
+    );
   }
 };
 
@@ -85,9 +91,10 @@ const send_Bnb = async (
     console.log(`Transaction hash: ${tx.hash}`);
 
     await tx.wait();
-    console.log("Transaction confirmed");
+    return tx.hash;
   } catch (err) {
     console.error("Error sending BNB:", err);
+    throw new Error(`send_Bnb failed: ${(err as any).reason || err}`);
   }
 };
 
@@ -95,19 +102,25 @@ const approve_Usdt = async (userPrivateKey: string, spenderAddress: string) => {
   try {
     const userSigner = new ethers.Wallet(userPrivateKey, provider);
 
-    const usdt = new ethers.Contract(process.env.USDT_OWN_Address!, usdt_Abi, userSigner);
+    const usdt = new ethers.Contract(
+      process.env.USDT_OWN_Address!,
+      usdt_Abi,
+      userSigner
+    );
 
     const tx = await usdt.approve(spenderAddress, MaxUint256);
     console.log(`Approval TX sent: ${tx.hash}`);
 
     await tx.wait();
     console.log("Approval confirmed!");
+    return tx.hash;
   } catch (err) {
     console.error("Error approving USDT:", err);
+    throw new Error(`approve_Usdt failed: ${(err as any).reason || err}`);
   }
 };
 
-const buy_Jtc_Meta_Tx = async (userPrivateKey: string, usdt_Amount: number) => {
+const buy_Jtc_Meta_Tx = async (userPrivateKey: string, usdt_Amount:  bigint | string) => {
   const FUNCTION_NAME = "BuyJtcToken";
   const FUNCTION_ARGS = [usdt_Amount];
   const userWallet = new ethers.Wallet(userPrivateKey, provider);
@@ -210,6 +223,7 @@ const buy_Jtc_Meta_Tx = async (userPrivateKey: string, usdt_Amount: number) => {
   console.log(
     `the reciept for this is the ${JSON.stringify(receipt, null, 2)}`
   );
+  return receipt;
 };
 
 // approveUsdt("0xf774451e023b3dfddf3b41af5341172a7e623a407d04bd5a1cb77cd4c4400f59","0x5bedB1ED9e72DF0f202309EeC5d4b14864335465");

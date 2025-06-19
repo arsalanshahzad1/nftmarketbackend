@@ -14,7 +14,8 @@ import { Types } from 'mongoose';
   password: string;
   privateKey: string;
   publicKey: string;
-  tokenVersion:number
+  tokenVersion:number;
+  usdt_Approved:boolean;
   role:Role
 }
 
@@ -39,4 +40,7 @@ interface Login_Dto {
   email:string
 }
 
-export {IUser,User_SignUp_Dto,Login_Dto,Role}
+interface Buy_Jtc_Dto{
+  usdt_Amount:number;
+}
+export {IUser,User_SignUp_Dto,Login_Dto,Role,Buy_Jtc_Dto}

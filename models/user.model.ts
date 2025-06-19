@@ -13,6 +13,7 @@ const UserSchema: Schema = new Schema<IUserDocument>({
   privateKey: { type: String ,default: null },
   publicKey: { type: String,default: null },
   tokenVersion: { type: Number, default: 0 },
+  usdt_Approved:{type:Boolean,default:false},
     role: {
     type: String,
     enum: Object.values(Role), // This ensures only valid enum strings
